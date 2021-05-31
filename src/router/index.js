@@ -1,6 +1,10 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+
+import Battlefield from '../views/Battlefield.vue'
 import Home from '../views/Home.vue'
+import Map from '../views/Map.vue'
+
 
 Vue.use(VueRouter)
 
@@ -17,6 +21,16 @@ const routes = [
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
+  },
+  {
+    path: '/map/ships',
+    name: 'Map',
+    component: Map
+  },
+  {
+    path: '/battlefield',
+    name: 'Battlefield',
+    component: Battlefield 
   }
 ]
 
