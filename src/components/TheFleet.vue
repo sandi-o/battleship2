@@ -21,6 +21,7 @@
 <script>
 export default {
     props: {
+        mapped: Boolean,
         removeChild: {type: Boolean, default: false},
         gameStart: {type: Boolean, default: false},
         gridSize: {type:Number, default:10},
@@ -40,7 +41,10 @@ export default {
             if(val){
                 this.$refs['grid-display'].removeChild(this.draggedShip.ship)
                 this.$store.commit('ship/CLEAR_DRAGGED_SHIP')
-                this.$emit('update:removeChild',false)   
+                this.$emit('update:removeChild',false) 
+                
+                if(this.$refs['grid-display'].childNodes.length == 0)
+                    this.$emit('update:mapped',true)
             }
         }
     },

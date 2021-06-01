@@ -14,14 +14,15 @@
         </div>
     </v-card>  
       <div class="overline">
-            <v-btn text v-if="!gameStart" color="secondary" @click="savePlayerBoard">Done</v-btn>
+            <v-btn text v-if="!gameStart" :disabled="!mapped" color="secondary" @click="savePlayerBoard">Done</v-btn>
       </div>
     </div>
 </template>
 
 <script>
 export default {
-    props: {        
+    props: {
+        mapped: Boolean,
         removeChild: {type: Boolean, default: false}, 
         gameStart: {type: Boolean, default: false},
         gameOver: {type: Boolean, default: false},
@@ -69,11 +70,7 @@ export default {
         startTurn(val) {        
             if(val)
                 this.disableBoard = false
-        },
-        gameStart(val) {
-            if(val)
-                this.disableBoard = true
-        },
+        },       
         opponent(val) {
             if(val != '') {                
                 //load all hit and miss of the enemy's board
@@ -92,6 +89,10 @@ export default {
             }
         },     
     },
+    mounted() {
+        if(this.gameStart)
+            this.disableBoard = true
+    },
     methods: {
         savePlayerBoard() {            
             this.$store.commit('player/SET_PLAYER_BOARD',this.board)
@@ -100,9 +101,9 @@ export default {
             this.ships = []
             if(this.player == 'p1') {
                 this.$store.commit('player/SET_PLAYER','p2')
+                this.$emit('update:mapped',false)
             } else if(this.player == 'p2') {
                 this.$store.commit('player/SET_PLAYER','p1')
-                this.$emit('update:gameStart', true)
                 this.$router.push({name: 'Battlefield'}) //push the game to start
             }
         },

@@ -5,10 +5,10 @@
     <v-card-text>
         <v-row>
             <v-col cols="12">
-                <the-board :removeChild.sync="removeChild" :key="player"></the-board>
+                <the-board :removeChild.sync="removeChild" :mapped.sync="mapped" :key="player"></the-board>
             </v-col>
             <v-col cols="12">
-                <the-fleet :removeChild.sync="removeChild" :key="player"></the-fleet>
+                <the-fleet :removeChild.sync="removeChild" :mapped.sync="mapped" :key="player"></the-fleet>
             </v-col>
         </v-row>
     </v-card-text>
@@ -29,9 +29,14 @@ export default {
     data() {
         return {
             removeChild: false,
+            mapped: false,
         }
     },
     mounted() {
+        this.$store.commit('ship/CLEAR_DRAGGED_SHIP')
+        this.$store.commit('ship/CLEAR_SELECTED_WITH_INDEX')
+        this.$store.commit('player/CLEAR_PLAYER')
+        this.$store.commit('player/CLEAR_PLAYER_BOARD')
         this.$store.commit('player/SET_PLAYER','p1')
     },
     computed: {

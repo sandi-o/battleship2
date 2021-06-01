@@ -57,14 +57,17 @@ export default {
     gameOver(val) {
       if(val) {
         this.genInfo = 'Game Over'
+        this.turnInfo = val+" Wins!"
       }
     }
   },
   mounted() {
-    this.genInfo = "Game Start!"    
+    this.genInfo = "Game Start!"
+    this.turnInfo = this.player+"'s Turn"    
   },
   methods: {
-    setOpponent() {      
+    setOpponent() { 
+      this.genInfo = "-"     
       if(this.player == 'p1') this.opponent = 'p2'
       if(this.player == 'p2') this.opponent = 'p1'
       this.startTurn = true
