@@ -57,7 +57,7 @@ export default {
     gameOver(val) {
       if(val) {
         this.genInfo = 'Game Over'
-        this.turnInfo = val+" Wins!"
+        this.turnInfo = this.player+" Wins!"
       }
     }
   },
