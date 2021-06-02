@@ -51,19 +51,15 @@ export default {
         draggedShip() {
             return this.$store.getters['ship/dragged']
         },
-        xNotAllowed() {
-            return [0,10,20,30,40,50,60,70,80,90,1,11,21,31,41,51,61,71,81,91,2,12,22,32,42,52,62,72,82,92,3,13,23,33,43,53,63,73,83,93]
-        },
-        yNotAllowed() {
-            return [99,98,97,96,95,94,93,92,91,90,89,88,87,86,85,84,83,82,81,80,79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,61,60]
-        }
     },
     data() {
         return {
             board: [],
+            disableBoard: false,
             savePlayerBoardBtn: true,
             ships: [],
-            disableBoard: false
+            xRange:{},
+            yRange:{},
         }
     },
     watch: {
@@ -92,6 +88,8 @@ export default {
     mounted() {
         if(this.gameStart)
             this.disableBoard = true
+        else
+            this.buildBoardRange()
     },
     methods: {
         savePlayerBoard() {            
@@ -117,9 +115,29 @@ export default {
             e.preventDefault()
         },
         dragLeave() {
-            //remove the highlight class
+            //do nothing
         },
-        dragDrop(e) {          
+        buildBoardRange() {
+            const BOARD_SIZE = Math.pow(this.gridSize,2)
+            for(let i =0; i < BOARD_SIZE ;i++) {
+                //getting the each row the min and max row
+                if(i%this.gridSize == 0){
+                    let rowIndex = i / this.gridSize
+                    let minRow = i
+                    let maxRow = i + (this.gridSize -1)
+                    this.xRange[rowIndex] = [minRow, maxRow]               
+                }
+                
+                if(i < this.gridSize) {
+                    let colIndex  = i
+                    let minCol = colIndex 
+                    let maxCol = (BOARD_SIZE - this.gridSize) + minCol
+
+                    this.yRange[colIndex] = [minCol, maxCol]         
+                }
+            }
+        },
+        dragDrop(e) {                  
             let dataSetId = parseInt(e.target.dataset.id) //target square id
             //gets the last div inside the (div)ship class
             let draggedShipRear = this.draggedShip.ship.lastChild.id
@@ -131,19 +149,30 @@ export default {
             //the id in the board where the ships rear will be placed
             //where e.target.dataset.id is the id of the board
             let shipRearBoardId = shipRearId + dataSetId
-
-            let newXNotAllowed = this.xNotAllowed.splice(0,10*shipRearId)
-            let newYNotAllowed= this.yNotAllowed.splice(0,10*shipRearId)
-
-            //where selectedShipNameWithIndex is the part (index) of the ship that is clicked 
+             //where selectedShipNameWithIndex is the part (index) of the ship that is clicked 
             this.selectedShipIndex  = parseInt(this.selectedShipNameWithIndex.substr(-1))  
-            //less the selectedShipIndex to identify the last board id of the rear ship 
-            shipRearBoardId -= this.selectedShipIndex
+            if(this.draggedShip.position == 'y'){
+                shipRearBoardId = (shipRearId * this.gridSize) + dataSetId
+                //less the selectedShipIndex to identify the last board id of the rear ship 
+                shipRearBoardId -= (this.selectedShipIndex * this.gridSize)
+            } else {
+                //less the selectedShipIndex to identify the last board id of the rear ship 
+                shipRearBoardId -= this.selectedShipIndex
+            }
             
+            //pin point the its position in the axis
+            let xPosition = Math.floor(dataSetId / this.gridSize)
+            let xRangeMin = this.xRange[xPosition][0];
+            let xRangeMax = this.xRange[xPosition][1];
+            
+            let yPosition = dataSetId % this.gridSize
+            let yRangeMin = this.yRange[yPosition][0];
+            let yRangeMax = this.yRange[yPosition][1];
+
             let overLapping = false
             //positioning fof ship in the board 
             //horizonal
-            if(this.draggedShip.position == 'x' && !newXNotAllowed.includes(shipRearBoardId)) {
+            if(this.draggedShip.position == 'x' && (shipRearBoardId >= xRangeMin && shipRearBoardId <= xRangeMax )) {
                 //check if the square that will be occupied is not taken by other ships
                 for(let x=0; x < this.draggedShip.length; x++) {
                     let squareId       =  dataSetId - this.selectedShipIndex + x;
@@ -159,7 +188,6 @@ export default {
                         let directionClass
                         if (x === 0) directionClass = 'start'
                         if (x === this.draggedShip.length - 1) directionClass = 'end'
-                        if (x === this.draggedShip.length) directionClass = ''
 
                         let squareId = dataSetId - this.selectedShipIndex + x;
                         let squareElement  = this.$refs[squareId][0];                    
@@ -168,10 +196,10 @@ export default {
                     }               
                 }          
             //vertical
-            } else if(this.draggedShip.position == 'y' && !newYNotAllowed.includes(shipRearBoardId)) {
+            } else if(this.draggedShip.position == 'y' && (shipRearBoardId >= yRangeMin && shipRearBoardId <= yRangeMax )) {
                 //check if the square that will be occupied is not taken by other ships
                 for(let y=0; y < this.draggedShip.length; y++) {
-                    let squareId = dataSetId - this.selectedShipIndex + this.gridSize * y;
+                    let squareId = dataSetId - this.selectedShipIndex + this.gridSize * y;                    
                     let squareElement = this.$refs[squareId][0];
                     if(squareElement.classList.contains('taken')){
                         overLapping = true
@@ -184,16 +212,15 @@ export default {
                         let directionClass
                         if (y === 0) directionClass = 'start'
                         if (y ===  this.draggedShip.length - 1) directionClass = 'end'
-                        if (y ===  this.draggedShip.length) directionClass = 'end'
                         
-                        let squareId = dataSetId - this.selectedShipIndex + this.gridSize * y;
+                        let squareId = dataSetId - this.selectedShipIndex + this.gridSize * y;                        
                         let squareElement = this.$refs[squareId][0];
                         
                         squareElement.classList.add('taken','vertical', directionClass, shipRearClassName)
                         this.board.push({'squareId': squareId,'ship':shipRearClassName,'classes':['taken','vertical', directionClass, shipRearClassName]});
                     }                 
                 }  
-            } else {
+            } else if(this.draggedShip.position == 'z'){                
                 for(let z=0; z <  this.draggedShip.length; z++) {                  
                     let squareId = dataSetId - this.selectedShipIndex + z; 
                     let squareElement = this.$refs[squareId][0];  
@@ -202,7 +229,7 @@ export default {
                         this.board.push({'squareId': squareId,'ship':shipRearClassName,'classes':['taken', shipRearClassName]});                        
                     }
                 }
-            }
+            } else return
 
             if(!overLapping){
                 //set the player ship
